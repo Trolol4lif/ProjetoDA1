@@ -6,6 +6,13 @@
 #define RESERVOIR "../dataset/Reservoir.csv"
 #define STATIONS "../dataset/Stations.csv"
 
+#include <unordered_map>
+#include "City.h"
+#include "Reservoir.h"
+#include "Pipe.h"
+#include "Station.h"
+#include "data_structures/Graph.h"
+#include "NodeData.h"
 
 class Data {
     public:
@@ -14,6 +21,9 @@ class Data {
         void read_pipes();
         void read_reservoir();
         void read_stations();
+    private:
+        Graph<NodeData>* waterG;
+        unordered_map<string,NodeData*> nodes;
 };
 
 

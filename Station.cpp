@@ -1,23 +1,9 @@
 #include "Station.h"
 
-Station::Station(){}
+Station::Station(int id, string code):NodeData(id, code, nodeType::station){}
 
-Station::Station(int id, string code):
-        id(id), code(code){}
+// Change to code maybe???
 
-
-string Station::getCode() const{
-    return code;
-}
-
-int Station::getId() const{
-    return id;
-}
-
-void Station::setId(int id) {
-    Station::id = id;
-}
-
-void Station::setCode(const string &code) {
-    Station::code = code;
+bool Station::operator==(const Station& other) const{
+    return other.id == id;
 }

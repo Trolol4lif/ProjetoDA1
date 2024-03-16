@@ -2,10 +2,9 @@
 #define PROJETODA1_RESERVOIR_H
 
 
-using namespace std;
-#include "string"
+#include "NodeData.h"
 
-class Reservoir {
+class Reservoir: public NodeData{
     private:
         string name;
         string municipality;
@@ -13,17 +12,14 @@ class Reservoir {
         string code; // water reservoir code
         int maxDelivery; // m3/sec
     public:
-        Reservoir(const string &name, const string &municipality, const string &code, int maxDelivery);
+        Reservoir(const string &name, const string &municipality,const int &id, const string &code,const int& maxDelivery);
         const string &getName() const;
         void setName(const string &name);
         const string &getMunicipality() const;
         void setMunicipality(const string &municipality);
-        int getId() const;
-        void setId(int id);
-        const string &getCode() const;
-        void setCode(const string &code);
         int getMaxDelivery() const;
         void setMaxDelivery(int maxDelivery);
+        bool operator==(const Reservoir& other) const;
 };
 
 
