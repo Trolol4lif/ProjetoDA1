@@ -17,5 +17,9 @@ private:
     /** Menu options */
     void exit();
     int menuOptions() const;
+    int basicServiceMetricsOptions() const;
+    int reliabilityandSensitivitytoFailuresOptions() const;
+    void listReliabilityandSensitivitytoFailures();
+    void listBasicServiceMetrics();
 };
 #endif //PROJETODA1_MENU_H

@@ -32,8 +32,10 @@ void Data::read_cities() {
             id = stoi(id_str);
             population = stoi(population_str);
             demand = stod(demand_str);
-            NodeData* nodeData = new City(name,id,code,demand,population);
+            City *city = new City(name,id,code,demand,population);
+            NodeData* nodeData = city;
             waterG->addVertex(*nodeData);
+            cities[id] = city;
             nodes[code] = nodeData;
         }
     }else {
@@ -86,8 +88,10 @@ void Data::read_reservoir() {
             getline(iss,maxDelivery_str,',');
             id = stoi(id_str);
             maxDelivery = stoi(maxDelivery_str);
-            NodeData* nodeData = new Reservoir(name,municipality,id,code,maxDelivery);
+            Reservoir* reservoir = new Reservoir(name,municipality,id,code,maxDelivery);
+            NodeData* nodeData = reservoir;
             waterG->addVertex(*nodeData);
+            reservoirs[id] = reservoir;
             nodes[code] = nodeData;
         }
     }else {
@@ -108,9 +112,11 @@ void Data::read_stations() {
             getline(iss,id_str,',');
             getline(iss,code,',');
             id = stoi(id_str);
-            NodeData* nodeData = new Station(id,code);
+            Station* station = new Station(id,code);
+            NodeData* nodeData = station;
             waterG->addVertex(*nodeData);
             nodes[code] = nodeData;
+            stations[id] = station;
         }
     }else {
         cout << "Could not open the file\n";

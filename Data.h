@@ -24,6 +24,9 @@ class Data {
     private:
         Graph<NodeData>* waterG;
         unordered_map<string,NodeData*> nodes;
+        unordered_map<int,Reservoir*> reservoirs;
+        unordered_map<int,City*> cities;
+        unordered_map<int,Station*> stations;
 };
 
 
