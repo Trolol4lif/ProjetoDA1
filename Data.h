@@ -23,12 +23,15 @@ class Data {
         void read_reservoir();
         void read_stations();
         void checkMaxWaterCity();
-    private:
-        Graph<NodeData>* waterG;
-        unordered_map<string,Vertex<NodeData>*> nodes;
-        unordered_map<int,Vertex<NodeData>*> reservoirs;
-        unordered_map<int,Vertex<NodeData>*> cities;
-        unordered_map<int,Vertex<NodeData>*> stations;
+
+    void checkCitiesWaterDeficit();
+
+private:
+        Graph<NodeData*>* waterG;
+        unordered_map<string,Vertex<NodeData*>*> nodes;
+        unordered_map<int,Vertex<NodeData*>*> reservoirs;
+        unordered_map<int,Vertex<NodeData*>*> cities;
+        unordered_map<int,Vertex<NodeData*>*> stations;
 };
 
 

@@ -53,7 +53,7 @@ void Menu::listBasicServiceMetrics(){
                 data.checkMaxWaterCity();
                 break;
             case 2:
-                //TODO
+                data.checkCitiesWaterDeficit();
                 break;
             case 3:
                 //TODO

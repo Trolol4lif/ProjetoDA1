@@ -6,7 +6,7 @@
 
 
 Data::Data() {
-    waterG = new Graph<NodeData>();
+    waterG = new Graph<NodeData*>();
     read_cities();
     read_stations();
     read_reservoir();
@@ -33,7 +33,7 @@ void Data::read_cities() {
             population = stoi(population_str);
             demand = stod(demand_str);
             City *city = new City(name,id,code,demand,population);
-            Vertex<NodeData>* l = waterG->addReturnVertex(*city);
+            Vertex<NodeData*>* l = waterG->addReturnVertex(city);
             cities[id] = l;
             nodes[code] = l;
         }
@@ -88,7 +88,7 @@ void Data::read_reservoir() {
             id = stoi(id_str);
             maxDelivery = stoi(maxDelivery_str);
             Reservoir* reservoir = new Reservoir(name,municipality,id,code,maxDelivery);
-            Vertex<NodeData>* l = waterG->addReturnVertex(*reservoir);
+            Vertex<NodeData*>* l = waterG->addReturnVertex(reservoir);
             reservoirs[id] = l;
             nodes[code] = l;
         }
@@ -111,7 +111,7 @@ void Data::read_stations() {
             getline(iss,code,',');
             id = stoi(id_str);
             Station* station = new Station(id,code);
-            Vertex<NodeData>* l = waterG->addReturnVertex(*station);
+            Vertex<NodeData*>* l = waterG->addReturnVertex(station);
             nodes[code] = l;
             stations[id] = l;
         }
@@ -121,6 +121,21 @@ void Data::read_stations() {
 }
 
 void Data::checkMaxWaterCity(){
+}
+
+void Data::checkCitiesWaterDeficit() {
+    for(pair<int,Vertex<NodeData*>*> tuple: cities){
+        Vertex<NodeData*>* city = tuple.second;
+        int capacity = 0;
+        NodeData* gaming = city->getInfo();
+        for( Edge<NodeData*>* edge: city->getIncoming()){
+            capacity += edge->getWeight();
+        }
+        City* fart = (City*) gaming;
+        if(capacity <  fart->getDemand()){
+            cout << "City code:" << fart->getCode()  << " | Value:"  << fart->getDemand() - capacity << endl;
+        }
+    }
 }
 
 template <class T>
@@ -183,3 +198,5 @@ void edmondsKarp(Graph<T> *g, int source, int target) {
         }
     }
 }
+
+
