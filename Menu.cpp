@@ -47,10 +47,24 @@ int Menu::menuOptions() const {
 
 void Menu::listBasicServiceMetrics(){
     int option = basicServiceMetricsOptions();
+    int checkMaxWaterCityOption;
     while (option){
         switch (option) {
             case 1:
-                data.checkMaxWaterCity();
+                checkMaxWaterCityOption = checkMaxWaterCityOptions();
+                while (checkMaxWaterCityOption){
+                    switch (checkMaxWaterCityOption) {
+                        case 1:
+                            //TODO
+                            break;
+                        case 2:
+                            //TODO
+                            break;
+                        default:
+                            std::cout << "Invalid option try again" << std::endl;
+                    }
+                    checkMaxWaterCityOption = checkMaxWaterCityOptions();
+                }
                 break;
             case 2:
                 data.checkCitiesWaterDeficit();
@@ -114,9 +128,8 @@ int Menu::basicServiceMetricsOptions() const{
 
 int Menu::checkMaxWaterCityOptions() const{
     int option;
-    std::cout << "1. Check the maximum amount of water that can reach each or a specific city" << std::endl;
-    std::cout << "2. Check the Cities that don't meet the desired water rate level requirements" << std::endl;
-    cout << "3. Check the average and variance of the differences between capacity and flow for each pipe, as well as,\n the maximum difference, before and after the balancing" << endl;
+    std::cout << "1. Check for all cities" << std::endl;
+    std::cout << "2. Check for a specific city" << std::endl;
     cout << "0. Go back" << endl;
     cout << "Enter your option:";
     cin >> option;

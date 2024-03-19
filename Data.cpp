@@ -127,13 +127,13 @@ void Data::checkCitiesWaterDeficit() {
     for(pair<int,Vertex<NodeData*>*> tuple: cities){
         Vertex<NodeData*>* city = tuple.second;
         int capacity = 0;
-        NodeData* gaming = city->getInfo();
+        NodeData* node = city->getInfo();
         for( Edge<NodeData*>* edge: city->getIncoming()){
             capacity += edge->getWeight();
         }
-        City* fart = (City*) gaming;
-        if(capacity <  fart->getDemand()){
-            cout << "City code:" << fart->getCode()  << " | Value:"  << fart->getDemand() - capacity << endl;
+        City* pCity = (City*) node;
+        if(capacity <  pCity->getDemand()){
+            cout << "City code:" << pCity->getCode()  << " | Value:"  << pCity->getDemand() - capacity << endl;
         }
     }
 }
