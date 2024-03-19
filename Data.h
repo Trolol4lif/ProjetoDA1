@@ -7,12 +7,13 @@
 #define STATIONS "../dataset/Stations.csv"
 
 #include <unordered_map>
+#include "NodeData.h"
 #include "City.h"
 #include "Reservoir.h"
 #include "Pipe.h"
 #include "Station.h"
 #include "data_structures/Graph.h"
-#include "NodeData.h"
+
 
 class Data {
     public:
@@ -21,12 +22,13 @@ class Data {
         void read_pipes();
         void read_reservoir();
         void read_stations();
+        void checkMaxWaterCity();
     private:
         Graph<NodeData>* waterG;
-        unordered_map<string,NodeData*> nodes;
-        unordered_map<int,Reservoir*> reservoirs;
-        unordered_map<int,City*> cities;
-        unordered_map<int,Station*> stations;
+        unordered_map<string,Vertex<NodeData>*> nodes;
+        unordered_map<int,Vertex<NodeData>*> reservoirs;
+        unordered_map<int,Vertex<NodeData>*> cities;
+        unordered_map<int,Vertex<NodeData>*> stations;
 };
 
 

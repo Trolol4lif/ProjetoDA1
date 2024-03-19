@@ -21,5 +21,6 @@ private:
     int reliabilityandSensitivitytoFailuresOptions() const;
     void listReliabilityandSensitivitytoFailures();
     void listBasicServiceMetrics();
+    int checkMaxWaterCityOptions() const;
 };
 #endif //PROJETODA1_MENU_H
