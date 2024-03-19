@@ -1,6 +1,6 @@
 #include "Station.h"
 
-Station::Station(int id, string code):NodeData(id, code, nodeType::station){}
+Station::Station(int id, string code):NodeData(id, code, nodeType::STATION){}
 
 // Change to code maybe???
 

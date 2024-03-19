@@ -3,7 +3,7 @@
 
 #define CITIES "../dataset/Cities.csv"
 #define PIPES "../dataset/Pipes.csv"
-#define RESERVOIR "../dataset/Reservoir.csv"
+#define RESERVOIRS "../dataset/Reservoir.csv"
 #define STATIONS "../dataset/Stations.csv"
 
 #include <unordered_map>

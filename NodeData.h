@@ -5,9 +5,9 @@
 using namespace std;
 #include "string"
 enum nodeType{
-    reservoir,
-    station,
-    city,
+    RESERVOIR,
+    STATION,
+    CITY,
 };
 class NodeData {
     public:

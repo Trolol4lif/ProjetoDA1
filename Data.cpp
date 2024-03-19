@@ -73,7 +73,7 @@ void Data::read_pipes() {
 void Data::read_reservoir() {
     string name,code,municipality;
     int id,maxDelivery;
-    std::ifstream file(RESERVOIR);
+    std::ifstream file(RESERVOIRS);
     if(file.is_open()){
         string line;
         getline(file,line); // Skip header line

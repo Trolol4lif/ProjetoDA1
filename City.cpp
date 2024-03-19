@@ -24,7 +24,7 @@ void City::setPopulation(int population) {
     City::population = population;
 }
 
-City::City(const string& name,const int& id,const string& delivery_code,const double& demand,const int& population): NodeData(id,delivery_code,nodeType::city){
+City::City(const string& name,const int& id,const string& delivery_code,const double& demand,const int& population): NodeData(id,delivery_code,nodeType::CITY){
     this->name = name;
     this->demand = demand;
     this->population = population;
