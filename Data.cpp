@@ -1,5 +1,6 @@
 #include <fstream>
 #include <sstream>
+#include <cmath>
 #include "Data.h"
 #include "data_structures/Graph.h"
 #include "NodeData.h"
@@ -120,7 +121,104 @@ void Data::read_stations() {
     }
 }
 
+double bfs(Graph<NodeData *> &g,NodeData* source,NodeData* target){
+    for(Vertex<NodeData*>* v:g.getVertexSet()){
+        v->setPath(nullptr);
+    }
+    std::queue<std::pair<Vertex<NodeData*>*,double>> queue;
+    queue.push({g.findVertex(source),std::numeric_limits<double>::max()});
+    while (!queue.empty()){
+        Vertex<NodeData*>* v = queue.front().first;
+        double flow = queue.front().second;
+        queue.pop();
+
+        for (Edge<NodeData*>* edge : v->getAdj()){
+            Vertex<NodeData*>* dest = edge->getDest();
+            if ((dest->getPath()== nullptr) && (edge->getWeight() > edge->getFlow())){
+                dest->setPath(edge);
+                double new_flow = std::min(flow, edge->getWeight());
+                if (dest->getInfo() == target) return new_flow;
+                queue.push({dest, new_flow});
+            }
+        }
+        for (Edge<NodeData*>* edge : v->getIncoming()){
+            Vertex<NodeData*>* orig = edge->getOrig();
+            if ((orig->getPath()== nullptr) && (edge->getFlow() > 0)){
+                orig->setPath(edge);
+                double new_flow = std::min(flow, edge->getFlow());
+                if (orig->getInfo() == target) return new_flow;
+                queue.push({orig, new_flow});
+            }
+        }
+    }
+    return 0;
+}
+
+void edmondsKarp(Graph<NodeData *> &g, NodeData* source, NodeData* target) {
+    // initialization
+    for(Vertex<NodeData*>* v:g.getVertexSet()){
+        v->setVisited(false);
+        v->setProcesssing(false);
+        for(Edge<NodeData*>* edge:v->getAdj()){
+            edge->setFlow(0);
+        }
+    }
+    // Set flow from the SuperSource
+    for(auto e:g.findVertex(source)->getAdj()){
+        Reservoir* pReservoir = (Reservoir*) e->getDest();
+        e->setFlow(pReservoir->getMaxDelivery());
+    }
+    double flow;
+    // Search for augmenting paths
+    while((flow = bfs(g,source,target))){
+        // sum of residual water
+        Vertex<NodeData*>* currentVertex = g.findVertex(target);
+        while (currentVertex->getInfo() != source){
+            Edge<NodeData*>* previous = currentVertex->getPath();
+            if(previous->getDest() == currentVertex){
+                previous->setFlow(previous->getFlow()+flow);
+                currentVertex = previous->getOrig();
+            } else{
+                previous->setFlow(previous->getFlow()-flow);
+                currentVertex = previous->getDest();
+            }
+        }
+    }
+}
+
 void Data::checkMaxWaterCity(){
+    cout << "Type the id of the respective city:";
+    int id;
+    cin >> id;
+    if(id > cities.size()){
+        cout << "There is no city with such id" << endl;
+        return;
+    }
+    Graph<NodeData*> graph = *waterG;
+    //Add a superSource to the graph
+    NodeData* source = new NodeData(0, "superSource", RESERVOIR);
+    Vertex<NodeData*>* vertex = graph.addReturnVertex(source);
+    // set the capacity of the SuperSource->Reservoir INFINITY
+    for(auto pair:reservoirs){
+        auto w = pair.second;
+        vertex->addEdge(graph.findVertex(reservoirs[w->getInfo()->getId()]->getInfo()),INFINITY);
+    }
+    NodeData* sink = new NodeData(0, "superSink", CITY);
+    Vertex<NodeData*>* sinkVertex = graph.addReturnVertex(sink);
+
+    for(auto pair:cities){
+        auto w = pair.second;
+        graph.findVertex(cities[w->getInfo()->getId()]->getInfo())->addEdge(sinkVertex,INFINITY);
+    }
+
+    edmondsKarp(graph, source, sink);
+    Vertex<NodeData*>* node = graph.findVertex(sink);
+    int maxFlow = 0;
+    for(auto edge:node->getIncoming()){
+        maxFlow+=edge->getFlow();
+    }
+
+    cout << "Max water to arrive from city, " << ", is " << maxFlow << endl;
 }
 
 void Data::checkCitiesWaterDeficit() {
@@ -138,65 +236,5 @@ void Data::checkCitiesWaterDeficit() {
     }
 }
 
-template <class T>
-double bfs(Graph<T>*g,int source,int target){
-    for(Vertex<T>* v:g->getVertexSet()){
-        v->setPath(nullptr);
-    }
-    std::queue<std::pair<Vertex<T>*,double>> queue;
-    queue.push({g->findVertex(source),std::numeric_limits<double>::max()});
-    while (!queue.empty()){
-        Vertex<T>* v = queue.front().first;
-        double flow = queue.front().second;
-        queue.pop();
-
-        for (Edge<T>* edge : v->getAdj()){
-            Vertex<T>* dest = edge->getDest();
-            if ((dest->getPath()== nullptr) && (edge->getWeight() > edge->getFlow())){
-                dest->setPath(edge);
-                double new_flow = std::min(flow, edge->getWeight());
-                if (dest->getInfo() == target) return new_flow;
-                queue.push({dest, new_flow});
-            }
-        }
-        for (Edge<T>* edge : v->getIncoming()){
-            Vertex<T>* orig = edge->getOrig();
-            if ((orig->getPath()== nullptr) && (edge->getFlow() > 0)){
-                orig->setPath(edge);
-                double new_flow = std::min(flow, edge->getFlow());
-                if (orig->getInfo() == target) return new_flow;
-                queue.push({orig, new_flow});
-            }
-        }
-    }
-    return 0;
-}
-template <class T>
-void edmondsKarp(Graph<T> *g, int source, int target) {
-    // initialization
-    for(Vertex<T>* v:g->getVertexSet()){
-        v->setVisited(false);
-        v->setProcesssing(false);
-        for(Edge<T>* edge:v->getAdj()){
-            edge->setFlow(0);
-        }
-    }
-    double flow;
-    // Search for augmenting paths
-    while((flow = bfs(g,source,target))){
-        // sum of residual water
-        Vertex<T>* currentVertex = g->findVertex(target);
-        while (currentVertex->getInfo() != source){
-            Edge<T>* previous = currentVertex->getPath();
-            if(previous->getDest() == currentVertex){
-                previous->setFlow(previous->getFlow()+flow);
-                currentVertex = previous->getOrig();
-            } else{
-                previous->setFlow(previous->getFlow()-flow);
-                currentVertex = previous->getDest();
-            }
-        }
-    }
-}
 
 

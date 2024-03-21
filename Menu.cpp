@@ -59,6 +59,7 @@ void Menu::listBasicServiceMetrics(){
                             break;
                         case 2:
                             //TODO
+                            data.checkMaxWaterCity();
                             break;
                         default:
                             std::cout << "Invalid option try again" << std::endl;
