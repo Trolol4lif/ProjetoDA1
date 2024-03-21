@@ -162,7 +162,7 @@ std::pair<Edge<NodeData*>*,double> edBFS(NodeData* target,   Vertex<NodeData*> *
 }
 
 
-void edmondsKarpWalkback(std::pair<Edge<NodeData*>*,double> edge,NodeData* source,Vertex<NodeData*>* currentVertex){
+void edmondsKarpWalkback(std::pair<Edge<NodeData*>*,double> edge,Vertex<NodeData*>* currentVertex){
     double minFlow = edge.second;
     Edge<NodeData*>* currentEdge = edge.first;
 
@@ -179,7 +179,6 @@ void edmondsKarpWalkback(std::pair<Edge<NodeData*>*,double> edge,NodeData* sourc
         currentEdge = currentVertex->getPath();
 
     }
-
 
 
 }
@@ -204,9 +203,13 @@ void edmondsKarp(Graph<T> &g, NodeData* source, NodeData* target) {
         if( edge.first == nullptr){
             break;
         }
-        edmondsKarpWalkback(edge,source,target_v);
+        edmondsKarpWalkback(edge,target_v);
     }
 }
+
+
+
+
 
 void Data::checkMaxWaterCity(){
     cout << "Type the id of the respective city:";
@@ -223,7 +226,8 @@ void Data::checkMaxWaterCity(){
     // set the capacity of the SuperSource->Reservoir INFINITY
     for(auto pair:reservoirs){
         auto w = pair.second;
-        vertex->addEdge(graph.findVertex(reservoirs[w->getInfo()->getId()]->getInfo()),INFINITY);
+        Reservoir* reservoir = (Reservoir*) w->getInfo();
+        vertex->addEdge(graph.findVertex(reservoirs[w->getInfo()->getId()]->getInfo()),reservoir->getMaxDelivery());
     }
     NodeData* sink = new NodeData(0, "superSink", CITY);
     Vertex<NodeData*>* sinkVertex = graph.addReturnVertex(sink);
@@ -239,8 +243,8 @@ void Data::checkMaxWaterCity(){
     for(auto edge:node->getIncoming()){
         maxFlow+=edge->getFlow();
     }
-
-    cout << "Max water to arrive from city, " << ", is " << maxFlow << endl;
+    City* pCity = (City*) cities[id]->getInfo();
+    cout << "Max water to arrive to city, " << pCity->getName() << " with code,"<< pCity->getCode() << ", is " << maxFlow <<  endl;
 }
 
 void Data::checkCitiesWaterDeficit() {
