@@ -55,10 +55,9 @@ void Menu::listBasicServiceMetrics(){
                 while (checkMaxWaterCityOption){
                     switch (checkMaxWaterCityOption) {
                         case 1:
-                            //TODO
+                            data.checkMaxWaterWholeNetwork();
                             break;
                         case 2:
-                            //TODO
                             data.checkMaxWaterCity();
                             break;
                         default:

@@ -13,6 +13,7 @@ Data::Data() {
     read_stations();
     read_reservoir();
     read_pipes();
+    createEdmondskarpG();
 }
 
 void Data::read_cities() {
@@ -48,6 +49,7 @@ void Data::read_pipes() {
     bool direction;
     string pointA,pointB;
     int capacity;
+    int id = 1;
     std::ifstream file(PIPES);
     if(file.is_open()){
         string line;
@@ -61,11 +63,13 @@ void Data::read_pipes() {
             getline(iss,direction_str,',');
             direction = stoi(direction_str);
             capacity = stoi(capacity_str);
+            pipes[id] = new Pipe(pointA,pointB,capacity,direction);
             if(direction){
                 waterG->addEdge(nodes[pointA]->getInfo(),nodes[pointB]->getInfo(),capacity);
             }else{
                 waterG->addBidirectionalEdge(nodes[pointA]->getInfo(),nodes[pointB]->getInfo(),capacity);
             }
+            id++;
         }
     }else {
         cout << "Could not open the file\n";
@@ -207,9 +211,74 @@ void edmondsKarp(Graph<T> &g, NodeData* source, NodeData* target) {
     }
 }
 
+void Data::deepCopyGraph(Graph<NodeData*>* graph,unordered_map<string,Vertex<NodeData*>*> &map){
+    for(auto pair:nodes){
+        auto v = pair.second;
+        NodeData* nodeData;
+        switch (v->getInfo()->getType()) {
+            case CITY:
+                nodeData = new City(*(City*)v->getInfo());
+                break;
+            case RESERVOIR:
+                nodeData = new Reservoir(*(Reservoir*)v->getInfo());
+                break;
+            case STATION:
+                nodeData = new Station(*(Station*)v->getInfo());
+                break;
+            default:
+                cout << "Invalid type" << endl;
+                break;
+        }
+        Vertex<NodeData*>* vertex = graph->addReturnVertex(nodeData);
+        map[v->getInfo()->getCode()] =  vertex;
+    }
+    for(auto pair:pipes){
+        auto p = pair.second;
+        if(p->isDirection()){
+            graph->addEdge(map[p->getServicePointA()]->getInfo(),map[p->getServicePointB()]->getInfo(),p->getCapacity());
+        }else{
+            graph->addBidirectionalEdge(map[p->getServicePointA()]->getInfo(),map[p->getServicePointB()]->getInfo(),p->getCapacity());
+        }
+    }
 
+}
 
+void Data::createEdmondskarpG(){
+    edmondskarpG = new Graph<NodeData*>();
+    deepCopyGraph(edmondskarpG,nodesKarpG);
+    addSuperSource_Sink(edmondskarpG,nodesKarpG);
+    edmondsKarp(*edmondskarpG, nodesKarpG["superSource"]->getInfo(),nodesKarpG["superSink"]->getInfo());
+}
 
+void Data::addSuperSource_Sink(Graph<NodeData*>* graph,unordered_map<string,Vertex<NodeData*>*> &map){
+    NodeData* source = new NodeData(0, "superSource", RESERVOIR);
+    Vertex<NodeData*>* vertex = graph->addReturnVertex(source);
+    // Add new source to Map
+    map[vertex->getInfo()->getCode()] = vertex;
+    // set the capacity of the SuperSource->Reservoir MaxDelivery of Reservoir
+    for(auto pair:reservoirs){
+        auto w = pair.second;
+        Reservoir* reservoir = (Reservoir*) w->getInfo();
+        vertex->addEdge(graph->findVertex(map[w->getInfo()->getCode()]->getInfo()),reservoir->getMaxDelivery());
+    }
+    // SuperSink
+    NodeData* sink = new NodeData(0, "superSink", CITY);
+    Vertex<NodeData*>* sinkVertex = graph->addReturnVertex(sink);
+    map[sinkVertex->getInfo()->getCode()] = sinkVertex;
+    for(auto pair:cities){
+        auto w = pair.second;
+        graph->findVertex(map[w->getInfo()->getCode()]->getInfo())->addEdge(sinkVertex,INFINITY);
+    }
+}
+
+void Data::checkMaxWaterWholeNetwork() {
+    Vertex<NodeData*>* node = edmondskarpG->findVertex(nodesKarpG["superSink"]->getInfo());
+    int maxFlow = 0;
+    for(auto edge:node->getIncoming()){
+        maxFlow+=edge->getFlow();
+    }
+    cout << "The Max flow of water in the whole network is: " << maxFlow <<  endl;
+}
 
 void Data::checkMaxWaterCity(){
     cout << "Type the id of the respective city:";
@@ -219,31 +288,13 @@ void Data::checkMaxWaterCity(){
         cout << "There is no city with such id" << endl;
         return;
     }
-    Graph<NodeData*> graph = *waterG;
-    //Add a superSource to the graph
-    NodeData* source = new NodeData(0, "superSource", RESERVOIR);
-    Vertex<NodeData*>* vertex = graph.addReturnVertex(source);
-    // set the capacity of the SuperSource->Reservoir INFINITY
-    for(auto pair:reservoirs){
-        auto w = pair.second;
-        Reservoir* reservoir = (Reservoir*) w->getInfo();
-        vertex->addEdge(graph.findVertex(reservoirs[w->getInfo()->getId()]->getInfo()),reservoir->getMaxDelivery());
-    }
-    NodeData* sink = new NodeData(0, "superSink", CITY);
-    Vertex<NodeData*>* sinkVertex = graph.addReturnVertex(sink);
-
-    for(auto pair:cities){
-        auto w = pair.second;
-        graph.findVertex(cities[w->getInfo()->getId()]->getInfo())->addEdge(sinkVertex,INFINITY);
-    }
-
-    edmondsKarp(graph, source, sink);
-    Vertex<NodeData*>* node = graph.findVertex(sink);
+    string code = "C_"+ to_string(id);
+    Vertex<NodeData*>* node = edmondskarpG->findVertex(nodesKarpG[code]->getInfo());
     int maxFlow = 0;
     for(auto edge:node->getIncoming()){
         maxFlow+=edge->getFlow();
     }
-    City* pCity = (City*) cities[id]->getInfo();
+    City* pCity = (City*) node->getInfo();
     cout << "Max water to arrive to city, " << pCity->getName() << " with code,"<< pCity->getCode() << ", is " << maxFlow <<  endl;
 }
 

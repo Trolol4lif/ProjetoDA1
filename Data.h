@@ -23,15 +23,20 @@ class Data {
         void read_reservoir();
         void read_stations();
         void checkMaxWaterCity();
-
-    void checkCitiesWaterDeficit();
-
+        void checkCitiesWaterDeficit();
+        void deepCopyGraph(Graph<NodeData *> *graph, unordered_map<string, Vertex<NodeData *> *> &map);
+        void createEdmondskarpG();
+        void addSuperSource_Sink(Graph<NodeData *> *graph, unordered_map<string, Vertex<NodeData *> *> &map);
+        void checkMaxWaterWholeNetwork();
 private:
         Graph<NodeData*>* waterG;
+        Graph<NodeData*>* edmondskarpG;
+        unordered_map<string,Vertex<NodeData*>*> nodesKarpG;
         unordered_map<string,Vertex<NodeData*>*> nodes;
         unordered_map<int,Vertex<NodeData*>*> reservoirs;
         unordered_map<int,Vertex<NodeData*>*> cities;
         unordered_map<int,Vertex<NodeData*>*> stations;
+        unordered_map<int,Pipe*> pipes;
 };
 
 
