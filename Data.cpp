@@ -298,6 +298,41 @@ void Data::checkMaxWaterCity(){
     cout << "Max water to arrive to city, " << pCity->getName() << " with code,"<< pCity->getCode() << ", is " << maxFlow <<  endl;
 }
 
+void Data::print_calculateStatistics(Graph<NodeData*>* graph,double nPipes){
+    double average = 0;
+    double maxdif = 0;
+    double mindif = INFINITY;
+    for(auto v:graph->getVertexSet()){
+        if(v->getInfo()->getCode() == "superSource" || v->getInfo()->getCode() == "superSink"){
+            continue;
+        }
+        for(auto e:v->getAdj()){
+            if(e->getDest()->getInfo()->getCode() == "superSource" || e->getDest()->getInfo()->getCode() == "superSink"){
+                continue;
+            }
+            double difference = e->getWeight() - e->getFlow();
+            if(maxdif < difference){
+                maxdif = difference;
+            }
+            if(mindif > difference){
+                mindif = difference;
+            }
+            average+= difference;
+        }
+    }
+    average/=nPipes;
+    double variance = maxdif - mindif;
+    cout << "The average difference of capacity-flow is " << average << ", having variance of " << variance << " and max difference " << maxdif << endl;
+}
+
+void Data::checkBefore_AfterBalancing(){
+    cout << "---Before Balancing---" << endl;
+    print_calculateStatistics(edmondskarpG,pipes.size());
+
+
+    cout << "---After using the Balancing algorithm---" << endl;
+}
+
 void Data::checkCitiesWaterDeficit() {
     for(pair<int,Vertex<NodeData*>*> tuple: cities){
         Vertex<NodeData*>* city = tuple.second;

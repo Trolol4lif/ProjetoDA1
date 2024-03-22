@@ -71,6 +71,7 @@ void Menu::listBasicServiceMetrics(){
                 break;
             case 3:
                 //TODO
+                data.checkBefore_AfterBalancing();
                 break;
             default:
                 std::cout << "Invalid option try again" << std::endl;

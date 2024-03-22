@@ -28,6 +28,8 @@ class Data {
         void createEdmondskarpG();
         void addSuperSource_Sink(Graph<NodeData *> *graph, unordered_map<string, Vertex<NodeData *> *> &map);
         void checkMaxWaterWholeNetwork();
+        void checkBefore_AfterBalancing();
+
 private:
         Graph<NodeData*>* waterG;
         Graph<NodeData*>* edmondskarpG;
@@ -37,6 +39,8 @@ private:
         unordered_map<int,Vertex<NodeData*>*> cities;
         unordered_map<int,Vertex<NodeData*>*> stations;
         unordered_map<int,Pipe*> pipes;
+
+    void print_calculateStatistics(Graph<NodeData *> *graph,double nPipes);
 };
 
 
