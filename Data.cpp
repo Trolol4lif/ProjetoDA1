@@ -135,7 +135,7 @@ std::pair<Edge<NodeData*>*,double> edBFS(NodeData* target,   Vertex<NodeData*> *
         double runningMin = q.front().second;
         q.pop();
         for(Edge<NodeData*>* edge: v->getAdj()){
-            if(edge->getWeight() - edge->getFlow() > 0){
+            if(edge->getWeight() - edge->getFlow() > 0 && (edge->getReverse() == nullptr || edge->getReverse()->getFlow() == 0)){
                 if(edge->getDest()->getInfo() == target){
                     return {edge,std::min(edge->getWeight() - edge->getFlow(),runningMin)};
                 }
@@ -211,8 +211,8 @@ void edmondsKarp(Graph<T> &g, NodeData* source, NodeData* target) {
     }
 }
 
-void Data::deepCopyGraph(Graph<NodeData*>* graph,unordered_map<string,Vertex<NodeData*>*> &map){
-    for(auto pair:nodes){
+void Data::deepCopyGraph(Graph<NodeData*>* graph,unordered_map<string,Vertex<NodeData*>*> oldmap,unordered_map<string,Vertex<NodeData*>*> &newmap){
+    for(auto pair:oldmap){
         auto v = pair.second;
         NodeData* nodeData;
         switch (v->getInfo()->getType()) {
@@ -230,28 +230,31 @@ void Data::deepCopyGraph(Graph<NodeData*>* graph,unordered_map<string,Vertex<Nod
                 break;
         }
         Vertex<NodeData*>* vertex = graph->addReturnVertex(nodeData);
-        map[v->getInfo()->getCode()] =  vertex;
+        newmap[v->getInfo()->getCode()] =  vertex;
+
     }
-    for(auto pair:pipes){
-        auto p = pair.second;
-        if(p->isDirection()){
-            graph->addEdge(map[p->getServicePointA()]->getInfo(),map[p->getServicePointB()]->getInfo(),p->getCapacity());
-        }else{
-            graph->addBidirectionalEdge(map[p->getServicePointA()]->getInfo(),map[p->getServicePointB()]->getInfo(),p->getCapacity());
+    for(auto pair:oldmap){
+        Vertex<NodeData*>* v = pair.second;
+        for(auto edge: v->getAdj()){
+            Edge<NodeData*>* newEdge = newmap[v->getInfo()->getCode()]->addEdge(newmap[edge->getDest()->getInfo()->getCode()],edge->getWeight());
+            newEdge->setFlow(edge->getFlow());
+            newEdge->setReverse(edge->getReverse());
         }
     }
+
 
 }
 
 void Data::createEdmondskarpG(){
     edmondskarpG = new Graph<NodeData*>();
-    deepCopyGraph(edmondskarpG,nodesKarpG);
+    deepCopyGraph(edmondskarpG,nodes,nodesKarpG);
     addSuperSource_Sink(edmondskarpG,nodesKarpG);
     edmondsKarp(*edmondskarpG, nodesKarpG["superSource"]->getInfo(),nodesKarpG["superSink"]->getInfo());
+
 }
 
 void Data::addSuperSource_Sink(Graph<NodeData*>* graph,unordered_map<string,Vertex<NodeData*>*> &map){
-    NodeData* source = new NodeData(0, "superSource", RESERVOIR);
+    Reservoir* source = new Reservoir("superSource","superSource",-1,"superSource",INFINITY);
     Vertex<NodeData*>* vertex = graph->addReturnVertex(source);
     // Add new source to Map
     map[vertex->getInfo()->getCode()] = vertex;
@@ -262,7 +265,7 @@ void Data::addSuperSource_Sink(Graph<NodeData*>* graph,unordered_map<string,Vert
         vertex->addEdge(graph->findVertex(map[w->getInfo()->getCode()]->getInfo()),reservoir->getMaxDelivery());
     }
     // SuperSink
-    NodeData* sink = new NodeData(0, "superSink", CITY);
+    City* sink = new City("superSink",-1,"superSink",INFINITY,0);
     Vertex<NodeData*>* sinkVertex = graph->addReturnVertex(sink);
     map[sinkVertex->getInfo()->getCode()] = sinkVertex;
     for(auto pair:cities){
@@ -328,9 +331,10 @@ void Data::print_calculateStatistics(Graph<NodeData*>* graph,double nPipes){
 void Data::checkBefore_AfterBalancing(){
     cout << "---Before Balancing---" << endl;
     print_calculateStatistics(edmondskarpG,pipes.size());
-
+    Graph<NodeData*>* balenced = balancePipes(edmondskarpG);
 
     cout << "---After using the Balancing algorithm---" << endl;
+    print_calculateStatistics(balenced,pipes.size());
 }
 
 void Data::checkCitiesWaterDeficit() {
@@ -346,6 +350,46 @@ void Data::checkCitiesWaterDeficit() {
             cout << "City code:" << pCity->getCode()  << " | Value:"  << pCity->getDemand() - capacity << endl;
         }
     }
+}
+
+Graph<NodeData *> * Data::balancePipes(Graph<NodeData *> *pGraph) {
+    Graph<NodeData*> *balanced = new Graph<NodeData*>();
+    unordered_map<string,Vertex<NodeData*>*> nodeMap;
+    deepCopyGraph(balanced,nodesKarpG,nodeMap);
+    // remove original supersource and supersink
+    cout << balanced->removeVertex(nodesKarpG["superSource"]->getInfo()) << endl;
+    balanced->removeVertex(nodesKarpG["superSink"]->getInfo());
+    // add supersource
+    Reservoir* source = new Reservoir("superSource","superSource",-1,"superSource",INFINITY);
+    Vertex<NodeData*>* sourceVertex = balanced->addReturnVertex(source);
+    nodeMap["superSource"] = sourceVertex;
+    // add supersink
+    City* sink = new City("superSink",-1,"superSink",INFINITY,0);
+    Vertex<NodeData*>* sinkVertex = balanced->addReturnVertex(sink);
+    nodeMap["superSink"] = sinkVertex;
+
+    // connect supersink and supersource to graph
+    for(auto pair: cities){
+        auto city = pair.second;
+        double flow = 0;
+        for( auto edge: city->getIncoming()){
+            flow += edge->getFlow();
+        }
+        City* city1 = (City*) city->getInfo();
+        if(city1->getDemand() < flow){
+            sourceVertex->addEdge(city,flow - city1->getDemand());
+        }
+        if(city1->getDemand() > flow){
+            city->addEdge(sinkVertex,INFINITY);
+        }
+    }
+    edmondsKarp(*balanced,source,sink);
+
+
+
+
+
+    return balanced;
 }
 
 
