@@ -7,6 +7,9 @@
 #include "NodeData.h"
 
 
+template<class T>
+void resetFlow(const Graph<T> &g);
+
 Data::Data() {
     waterG = new Graph<NodeData*>();
     read_cities();
@@ -191,13 +194,7 @@ void edmondsKarp(Graph<T> &g, NodeData* source, NodeData* target) {
     int max_flow = 0;
     auto source_v = g.findVertex(source);
     auto target_v = g.findVertex(target);
-    for( Vertex<T>* v:g.getVertexSet()){
 
-        for(Edge<T>* edge: v->getAdj()){
-            edge->setFlow(0);
-        }
-
-    }
     while(true){
         for(Vertex<T>* v: g.getVertexSet()){
             v->setVisited(false);
@@ -208,6 +205,17 @@ void edmondsKarp(Graph<T> &g, NodeData* source, NodeData* target) {
             break;
         }
         edmondsKarpWalkback(edge,target_v);
+    }
+}
+
+
+void resetFlow(const Graph<NodeData*>* g) {
+    for( Vertex<NodeData*>* v:g->getVertexSet()){
+
+        for(Edge<NodeData*>* edge: v->getAdj()){
+            edge->setFlow(0);
+        }
+
     }
 }
 
@@ -249,6 +257,7 @@ void Data::createEdmondskarpG(){
     edmondskarpG = new Graph<NodeData*>();
     deepCopyGraph(edmondskarpG,nodes,nodesKarpG);
     addSuperSource_Sink(edmondskarpG,nodesKarpG);
+    resetFlow(edmondskarpG);
     edmondsKarp(*edmondskarpG, nodesKarpG["superSource"]->getInfo(),nodesKarpG["superSink"]->getInfo());
 
 }
