@@ -88,7 +88,7 @@ void Menu::listReliabilityandSensitivitytoFailures(){
                 //TODO
                 break;
             case 2:
-                //TODO
+                data.citiesAffectedPumpingStationRemoval();
                 break;
             case 3:
                 //TODO

@@ -7,8 +7,6 @@
 #include "NodeData.h"
 
 
-template<class T>
-void resetFlow(const Graph<T> &g);
 
 Data::Data() {
     waterG = new Graph<NodeData*>();
@@ -437,7 +435,7 @@ void Data::citiesAffectedPipelineRupture(){
             for(auto e:nodesKarpG[code]->getIncoming()){
                 oldFlow+=e->getFlow();
             }
-            if(flow != oldFlow && flow < pcity->getDemand()){
+            if(oldFlow >= pcity->getDemand() && flow < pcity->getDemand()){
                 stream << "/* Pipe rupture from " << pipe.second->getServicePointA() << "--" << pipe.second->getServicePointB() << " */" <<endl;
                 stream << "The city " << pcity->getName() << " with code " << pcity->getCode() << " is affected with a deficit of " << pcity->getDemand() - flow << endl;
             }
@@ -449,6 +447,7 @@ void Data::citiesAffectedPipelineRupture(){
         else{
             graph->addBidirectionalEdge(nodeMap[pipe.second->getServicePointA()]->getInfo(),nodeMap[pipe.second->getServicePointB()]->getInfo(),pipe.second->getCapacity());
         }
+        id = 1;
     }
     if(stream.str().empty()){
         cout << "There is no city affected by this pipe" << endl;
@@ -457,4 +456,58 @@ void Data::citiesAffectedPipelineRupture(){
     }
 }
 
+void Data::citiesAffectedPumpingStationRemoval(){
+    Graph<NodeData*> *graph = new Graph<NodeData*>();
+    unordered_map<string,Vertex<NodeData*>*> nodeMap;
+    deepCopyGraph(graph,nodes,nodeMap);
+    addSuperSource_Sink(graph,nodeMap);
+    int id = 1;
+    stringstream stream;
+    for(auto station:stations){
+        Vertex<NodeData*>* oldVertex = nodeMap[station.second->getInfo()->getCode()];
+        NodeData* newVertexInfo = new Station(*(Station*)oldVertex->getInfo());
+        vector<pair<Vertex<NodeData*>*,double>> incoming;
+        vector<pair<Vertex<NodeData*>*,double>> adj;
+        for(auto e:oldVertex->getIncoming()){
+            incoming.push_back({e->getOrig(),e->getWeight()});
+        }
+        for(auto e:oldVertex->getAdj()){
+            adj.push_back({e->getDest(),e->getWeight()});
+        }
 
+        graph->removeVertex(oldVertex->getInfo());
+        resetFlow(graph);
+        edmondsKarp(graph,nodeMap["superSource"]->getInfo(),nodeMap["superSink"]->getInfo());
+        while (cities.size() != id){
+            string code = "C_"+ to_string(id);
+            City* pcity = (City*)nodeMap[code]->getInfo();
+            int flow = 0;
+            int oldFlow = 0;
+            for(auto e:nodeMap[code]->getIncoming()){
+                flow+=e->getFlow();
+            }
+            for(auto e:nodesKarpG[code]->getIncoming()){
+                oldFlow+=e->getFlow();
+            }
+            if(oldFlow >= pcity->getDemand() && flow < pcity->getDemand()){
+                stream << "/* Station out of service " << station.second->getInfo()->getCode() << " */"<< endl;
+                stream << "The city " << pcity->getName() << " with code " << pcity->getCode() << " is affected with a deficit of " << pcity->getDemand() - flow << endl;
+            }
+            id++;
+        }
+        // Reset Pumping Station
+        Vertex<NodeData*>* node = graph->addReturnVertex(newVertexInfo);
+        for(auto inc:incoming){
+            inc.first->addEdge(node,inc.second);
+        }
+        for(auto a:adj){
+            node->addEdge(a.first,a.second);
+        }
+        id = 1;
+    }
+    if(stream.str().empty()){
+        cout << "There is no city affected by the removal of any station" << endl;
+    }else{
+        cout << stream.str();
+    }
+}

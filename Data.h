@@ -32,6 +32,7 @@ class Data {
         void print_calculateStatistics(Graph<NodeData *> *graph,double nPipes);
         Graph<NodeData *> * balancePipes(Graph<NodeData *> *pGraph);
         void citiesAffectedPipelineRupture();
+        void citiesAffectedPumpingStationRemoval();
 private:
         Graph<NodeData*>* waterG;
         Graph<NodeData*>* edmondskarpG;
