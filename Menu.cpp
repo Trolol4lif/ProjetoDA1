@@ -91,9 +91,6 @@ void Menu::listReliabilityandSensitivitytoFailures(){
                 data.citiesAffectedPumpingStationRemoval();
                 break;
             case 3:
-                //TODO
-                break;
-            case 4:
                 data.citiesAffectedPipelineRupture();
                 break;
             default:
@@ -108,8 +105,7 @@ int Menu::reliabilityandSensitivitytoFailuresOptions() const{
     int option;
     std::cout << "1. Check the affected cities whose water supply does not meet its demand when a reservoir is removed" << std::endl;
     std::cout << "2. Check which cities are affected when a pumping station is removed" << std::endl;
-    cout << "3. Check for each City which pipeline's rupture will incapacitate the desired amount of water to be delivered" << endl;
-    cout << "4. Check for each pipeline rupture which cities will be affected" << endl;
+    cout << "3. Check for each pipeline rupture which cities will be affected" << endl;
     cout<< "0. Back to main menu" << endl;
     cout << "Enter your option:";
     cin >> option;
