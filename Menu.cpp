@@ -94,7 +94,7 @@ void Menu::listReliabilityandSensitivitytoFailures(){
                 //TODO
                 break;
             case 4:
-                //TODO
+                data.citiesAffectedPipelineRupture();
                 break;
             default:
                 std::cout << "Invalid option try again" << std::endl;
@@ -110,7 +110,7 @@ int Menu::reliabilityandSensitivitytoFailuresOptions() const{
     std::cout << "2. Check which cities are affected when a pumping station is removed" << std::endl;
     cout << "3. Check for each City which pipeline's rupture will incapacitate the desired amount of water to be delivered" << endl;
     cout << "4. Check for each pipeline rupture which cities will be affected" << endl;
-    cout<< "0. Back to main menu"<<endl;
+    cout<< "0. Back to main menu" << endl;
     cout << "Enter your option:";
     cin >> option;
     return option;

@@ -304,7 +304,7 @@ void Data::checkMaxWaterCity(){
     cout << "Type the id of the respective city:";
     int id;
     cin >> id;
-    if(id > cities.size()){
+    if(id > cities.size() || id < 1){
         cout << "There is no city with such id" << endl;
         return;
     }
@@ -323,7 +323,6 @@ void Data::print_calculateStatistics(Graph<NodeData*>* graph,double nPipes){
     double average = 0;
     double maxdif = 0;
     double mindif = INFINITY;
-    // double totalPipes = 0; include double edges
     for(auto v:graph->getVertexSet()){
         if(v->getInfo()->getCode() == "superSource" || v->getInfo()->getCode() == "superSink"){
             continue;
@@ -340,7 +339,6 @@ void Data::print_calculateStatistics(Graph<NodeData*>* graph,double nPipes){
                 mindif = difference;
             }
             average+= difference;
-            //totalPipes++;
         }
     }
     average/=nPipes*100;
@@ -412,5 +410,51 @@ Graph<NodeData *> * Data::balancePipes(Graph<NodeData *> *pGraph) {
     return balanced;
 }
 
+void Data::citiesAffectedPipelineRupture(){
+    Graph<NodeData*> *graph = new Graph<NodeData*>();
+    unordered_map<string,Vertex<NodeData*>*> nodeMap;
+    deepCopyGraph(graph,nodes,nodeMap);
+    addSuperSource_Sink(graph,nodeMap);
+    stringstream stream;
+    int id = 1;
+    for(auto pipe:pipes){
+        if(pipe.second->isDirection()){
+            graph->removeEdge(nodeMap[pipe.second->getServicePointA()]->getInfo(),nodeMap[pipe.second->getServicePointB()]->getInfo());
+        }else{
+            graph->removeEdge(nodeMap[pipe.second->getServicePointA()]->getInfo(),nodeMap[pipe.second->getServicePointB()]->getInfo());
+            graph->removeEdge(nodeMap[pipe.second->getServicePointB()]->getInfo(),nodeMap[pipe.second->getServicePointA()]->getInfo());
+        }
+        resetFlow(graph);
+        edmondsKarp(graph,nodeMap["superSource"]->getInfo(),nodeMap["superSink"]->getInfo());
+        while (cities.size() != id){
+            string code = "C_"+ to_string(id);
+            City* pcity = (City*)nodeMap[code]->getInfo();
+            int flow = 0;
+            int oldFlow = 0;
+            for(auto e:nodeMap[code]->getIncoming()){
+                flow+=e->getFlow();
+            }
+            for(auto e:nodesKarpG[code]->getIncoming()){
+                oldFlow+=e->getFlow();
+            }
+            if(flow != oldFlow && flow < pcity->getDemand()){
+                stream << "/* Pipe rupture from " << pipe.second->getServicePointA() << "--" << pipe.second->getServicePointB() << " */" <<endl;
+                stream << "The city " << pcity->getName() << " with code " << pcity->getCode() << " is affected with a deficit of " << pcity->getDemand() - flow << endl;
+            }
+            id++;
+        }
+        if(pipe.second->isDirection()){
+            graph->addEdge(nodeMap[pipe.second->getServicePointA()]->getInfo(),nodeMap[pipe.second->getServicePointB()]->getInfo(),pipe.second->getCapacity());
+        }
+        else{
+            graph->addBidirectionalEdge(nodeMap[pipe.second->getServicePointA()]->getInfo(),nodeMap[pipe.second->getServicePointB()]->getInfo(),pipe.second->getCapacity());
+        }
+    }
+    if(stream.str().empty()){
+        cout << "There is no city affected by this pipe" << endl;
+    }else{
+        cout << stream.str();
+    }
+}
 
 
