@@ -129,86 +129,6 @@ void Data::read_stations() {
     }
 }
 
-std::pair<Edge<NodeData*>*,double> edBFS(NodeData* target,   Vertex<NodeData*> *source_v) {
-    std::queue<std::pair<Vertex<NodeData*>*,double>> q;
-    q.push({source_v,INT_MAX});
-    source_v->setVisited(true);
-    while(!q.empty()){
-        auto v = q.front().first;
-        double runningMin = q.front().second;
-        q.pop();
-        for(Edge<NodeData*>* edge: v->getAdj()){
-            if(edge->getWeight() - edge->getFlow() > 0 && (edge->getReverse() == nullptr || edge->getReverse()->getFlow() == 0)){
-                if(edge->getDest()->getInfo() == target){
-                    return {edge,std::min(edge->getWeight() - edge->getFlow(),runningMin)};
-                }
-                else if(!(edge->getDest()->isVisited())){
-                    q.push({edge->getDest(),std::min(edge->getWeight() - edge->getFlow(),runningMin)});
-                    edge->getDest()->setPath(edge);
-                    edge->getDest()->setVisited(true);
-
-
-                }
-            }
-
-        }
-        for(Edge<NodeData*>* edge:v->getIncoming()){
-            if(edge->getFlow() > 0){
-                if(edge->getOrig()->getInfo() == target){
-                    return {edge,std::min(edge->getFlow(),runningMin)};
-                }
-                else if(!(edge->getOrig()->isVisited())){
-                    q.push({edge->getOrig(),std::min(edge->getFlow(),runningMin)});
-                    edge->getOrig()->setPath(edge);
-                    edge->getOrig()->setVisited(true);
-                }
-            }
-        }
-    }
-    return {nullptr,0};
-}
-
-
-void edmondsKarpWalkback(std::pair<Edge<NodeData*>*,double> edge,Vertex<NodeData*>* currentVertex){
-    double minFlow = edge.second;
-    Edge<NodeData*>* currentEdge = edge.first;
-
-
-    while(currentEdge != nullptr){
-        if(currentEdge->getDest() == currentVertex){ // normal way
-            currentEdge->setFlow(currentEdge->getFlow()+minFlow);
-            currentVertex = currentEdge->getOrig();
-        }
-        else{
-            currentEdge->setFlow(currentEdge->getFlow()-minFlow);
-            currentVertex = currentEdge->getDest();
-        }
-        currentEdge = currentVertex->getPath();
-
-    }
-
-
-}
-template <class T>
-void edmondsKarp(Graph<T> &g, NodeData* source, NodeData* target) {
-    int max_flow = 0;
-    auto source_v = g.findVertex(source);
-    auto target_v = g.findVertex(target);
-
-    while(true){
-        for(Vertex<T>* v: g.getVertexSet()){
-            v->setVisited(false);
-            v->setPath(nullptr);
-        }
-        auto edge = edBFS(target,source_v);
-        if( edge.first == nullptr){
-            break;
-        }
-        edmondsKarpWalkback(edge,target_v);
-    }
-}
-
-
 void resetFlow(const Graph<NodeData*>* g) {
     for( Vertex<NodeData*>* v:g->getVertexSet()){
 
@@ -252,14 +172,102 @@ void Data::deepCopyGraph(Graph<NodeData*>* graph,unordered_map<string,Vertex<Nod
 
 
 }
+// Function to test the given vertex 'w' and visit it if conditions are met
+template <class T>
+void testAndVisit(std::queue< Vertex<T>*> &q, Edge<T> *e, Vertex<T> *w, double residual) {
+// Check if the vertex 'w' is not visited and there is residual capacity
+    if (! w->isVisited() && residual > 0) {
+// Mark 'w' as visited, set the path through which it was reached, and enqueue it
+        w->setVisited(true);
+        w->setPath(e);
+        q.push(w);
+    }
+}
+// Function to find an augmenting path using Breadth-First Search
+template <class T>
+bool findAugmentingPath(Graph<T> *g, Vertex<T> *s, Vertex<T> *t) {
+// Mark all vertices as not visited
+    for(auto v : g->getVertexSet()) {
+        v->setVisited(false);
+    }
+// Mark the source vertex as visited and enqueue it
+    s->setVisited(true);
+    std::queue<Vertex<T> *> q;
+    q.push(s);
+// BFS to find an augmenting path
+    while( ! q.empty() && ! t->isVisited()) {
+        auto v = q.front();
+        q.pop();
+// Process outgoing edges
+        for(auto e: v->getAdj()) {
+            testAndVisit(q, e, e->getDest(), e->getWeight() - e->getFlow());
+        }
+// Process incoming edges
+        for(auto e: v->getIncoming()) {
+            testAndVisit(q, e, e->getOrig(), e->getFlow());
+        }
+    }
+// Return true if a path to the target is found, false otherwise
+    return t->isVisited();
+}
+// Function to find the minimum residual capacity along the augmenting path
+template <class T>
+double findMinResidualAlongPath(Vertex<T> *s, Vertex<T> *t) {
+    double f = INFINITY;
+// Traverse the augmenting path to find the minimum residual capacity
+    for (auto v = t; v != s; ) {
+        auto e = v->getPath();
+        if (e->getDest() == v) {
+            f = std::min(f, e->getWeight() - e->getFlow());
+            v = e->getOrig();
+        }
+        else {
+            f = std::min(f, e->getFlow());
+            v = e->getDest();
+        }
+    }
+// Return the minimum residual capacity
+    return f;
+}
+// Function to augment flow along the augmenting path with the given flow value
+template <class T>
+void augmentFlowAlongPath(Vertex<T> *s, Vertex<T> *t, double f) {
+// Traverse the augmenting path and update the flow values accordingly
+    for (auto v = t; v != s; ) {
+        auto e = v->getPath();
+        double flow = e->getFlow();
+        if (e->getDest() == v) {
+            e->setFlow(flow + f);
+            v = e->getOrig();
+        }
+        else {
+            e->setFlow(flow - f);
+            v = e->getDest();
+        }
+    }
+}
+// Main function implementing the Edmonds-Karp algorithm
+template <class T>
+void edmondsKarp(Graph<T> *g, NodeData* source, NodeData* target) {
+// Find source and target vertices in the graph
+    Vertex<T>* s = g->findVertex(source);
+    Vertex<T>* t = g->findVertex(target);
+// Validate source and target vertices
+    if (s == nullptr || t == nullptr || s == t)
+        throw std::logic_error("Invalid source and/or target vertex");
+// While there is an augmenting path, augment the flow along the path
+    while( findAugmentingPath(g, s, t) ) {
+        double f = findMinResidualAlongPath(s, t);
+        augmentFlowAlongPath(s, t, f);
+    }
+}
 
 void Data::createEdmondskarpG(){
     edmondskarpG = new Graph<NodeData*>();
     deepCopyGraph(edmondskarpG,nodes,nodesKarpG);
     addSuperSource_Sink(edmondskarpG,nodesKarpG);
     resetFlow(edmondskarpG);
-    edmondsKarp(*edmondskarpG, nodesKarpG["superSource"]->getInfo(),nodesKarpG["superSink"]->getInfo());
-
+    edmondsKarp(edmondskarpG,nodesKarpG["superSource"]->getInfo(),nodesKarpG["superSink"]->getInfo());
 }
 
 void Data::addSuperSource_Sink(Graph<NodeData*>* graph,unordered_map<string,Vertex<NodeData*>*> &map){
@@ -311,18 +319,20 @@ void Data::checkMaxWaterCity(){
 }
 
 void Data::print_calculateStatistics(Graph<NodeData*>* graph,double nPipes){
+    //TODO Refazer esta merda
     double average = 0;
     double maxdif = 0;
     double mindif = INFINITY;
+    // double totalPipes = 0; include double edges
     for(auto v:graph->getVertexSet()){
         if(v->getInfo()->getCode() == "superSource" || v->getInfo()->getCode() == "superSink"){
             continue;
         }
         for(auto e:v->getAdj()){
-            if(e->getDest()->getInfo()->getCode() == "superSource" || e->getDest()->getInfo()->getCode() == "superSink"){
+            if(e->getDest()->getInfo()->getCode() == "superSource" || e->getDest()->getInfo()->getCode() == "superSink" ){
                 continue;
             }
-            double difference = e->getWeight() - e->getFlow();
+            double difference = (e->getWeight() - e->getFlow())/e->getWeight();
             if(maxdif < difference){
                 maxdif = difference;
             }
@@ -330,9 +340,10 @@ void Data::print_calculateStatistics(Graph<NodeData*>* graph,double nPipes){
                 mindif = difference;
             }
             average+= difference;
+            //totalPipes++;
         }
     }
-    average/=nPipes;
+    average/=nPipes*100;
     double variance = maxdif - mindif;
     cout << "The average difference of capacity-flow is " << average << ", having variance of " << variance << " and max difference " << maxdif << endl;
 }
@@ -394,9 +405,7 @@ Graph<NodeData *> * Data::balancePipes(Graph<NodeData *> *pGraph) {
             added->setFlow(0);
         }
     }
-    edmondsKarp(*balanced,source,sink);
-
-
+    edmondsKarp(balanced,source,sink);
 
 
 
