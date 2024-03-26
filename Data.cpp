@@ -495,7 +495,7 @@ void Data::citiesAffectedWaterReservoirRemoval(){
             id++;
         }
     if(stream.str().empty()){
-        cout << "There is no city affected by the removal of any station" << endl;
+        cout << "There is no city affected by the removal of this reservoir" << endl;
     }else{
         cout << stream.str();
     }
