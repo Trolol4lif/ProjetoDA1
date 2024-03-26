@@ -33,6 +33,7 @@ class Data {
         Graph<NodeData *> * balancePipes(Graph<NodeData *> *pGraph);
         void citiesAffectedPipelineRupture();
         void citiesAffectedPumpingStationRemoval();
+        void citiesAffectedWaterReservoirRemoval();
 private:
         Graph<NodeData*>* waterG;
         Graph<NodeData*>* edmondskarpG;
@@ -42,7 +43,6 @@ private:
         unordered_map<int,Vertex<NodeData*>*> cities;
         unordered_map<int,Vertex<NodeData*>*> stations;
         unordered_map<int,Pipe*> pipes;
-
 };
 
 

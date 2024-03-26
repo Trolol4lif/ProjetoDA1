@@ -85,7 +85,7 @@ void Menu::listReliabilityandSensitivitytoFailures(){
     while (option){
         switch (option) {
             case 1:
-                //TODO
+                data.citiesAffectedWaterReservoirRemoval();
                 break;
             case 2:
                 data.citiesAffectedPumpingStationRemoval();
